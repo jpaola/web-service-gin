@@ -33,27 +33,29 @@ func getAlbums(context *gin.Context) {
 	// if there is an error opening the connection, handle it
 	if err != nil {
 		// simply print the error to the console
-		fmt.Println("Err", err.Error())
+		fmt.Println("DB Connection error", err.Error())
 		// returns nil on error
 		return
 	}
 
 	defer db.Close()
+
 	results, err := db.Query("SELECT * FROM albums")
 
 	if err != nil {
-		fmt.Println("Err", err.Error())
+		fmt.Println("Query Error", err.Error())
 		return
 	}
 	
 	for results.Next() {
 		var a album
-        // for each row, scan into the Product struct
+		// for each row, scan into the album struct
 		err = results.Scan(&a.ID, &a.Title, &a.Artist, &a.Price)
+
 		if err != nil {
-			panic(err.Error()) // proper error handling instead of panic in your app
+			fmt.Println("Error while scanning album struct", err.Error()) // proper error handling instead of panic in your app
 		}
-        // append the product into products array
+        // append the album into albums array
 		albums = append(albums, a)
 	}
 
