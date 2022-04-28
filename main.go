@@ -1,9 +1,12 @@
 package main
 
 import (
+	"database/sql"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 // album represents data about a record album.
@@ -15,14 +18,45 @@ type album struct {
 }
 
 // albums slice to seed record album data.
-var albums = []album{
-    {ID: "1", Title: "Blue Train", Artist: "John Coltrane", Price: 56.99},
-    {ID: "2", Title: "Jeru", Artist: "Gerry Mulligan", Price: 17.99},
-    {ID: "3", Title: "Sarah Vaughan and Clifford Brown", Artist: "Sarah Vaughan", Price: 39.99},
-}
+var albums = []album{}
+
+// Database credentials
+var dbuser = "nameOfUser"
+var dbpass = "somePasscode" 
+var dbname = "nameOfDB"
+
 
 // getAlbums responds with the list of all albums as JSON.
 func getAlbums(context *gin.Context) {
+	db, err := sql.Open("mysql", dbuser+":"+dbpass+"@tcp(127.0.0.1:3306)/"+dbname)
+
+	// if there is an error opening the connection, handle it
+	if err != nil {
+		// simply print the error to the console
+		fmt.Println("Err", err.Error())
+		// returns nil on error
+		return
+	}
+
+	defer db.Close()
+	results, err := db.Query("SELECT * FROM albums")
+
+	if err != nil {
+		fmt.Println("Err", err.Error())
+		return
+	}
+	
+	for results.Next() {
+		var a album
+        // for each row, scan into the Product struct
+		err = results.Scan(&a.ID, &a.Title, &a.Artist, &a.Price)
+		if err != nil {
+			panic(err.Error()) // proper error handling instead of panic in your app
+		}
+        // append the product into products array
+		albums = append(albums, a)
+	}
+
     context.IndentedJSON(http.StatusOK, albums)
 }
 
@@ -101,6 +135,7 @@ func updateAlbumByID(context *gin.Context) {
 }
 
 func main() {
+
 	// initialize gin router using Default
     router := gin.Default()
 
