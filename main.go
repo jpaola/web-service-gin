@@ -34,7 +34,6 @@ func getAlbums(context *gin.Context) {
 	if err != nil {
 		// simply print the error to the console
 		fmt.Println("DB Connection error", err.Error())
-		// returns nil on error
 		return
 	}
 
@@ -42,6 +41,7 @@ func getAlbums(context *gin.Context) {
 
 	results, err := db.Query("SELECT * FROM albums")
 
+	// if there is an error during query, handle it
 	if err != nil {
 		fmt.Println("Query Error", err.Error())
 		return
