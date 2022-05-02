@@ -161,28 +161,32 @@ func RemoveAlbumByID(ctx *gin.Context) {
 // updateAlbumByID locates the album whose ID value matches the id
 // parameter sent by the client, then removes that album as a response.
 func UpdateAlbumByID(ctx *gin.Context) {
-    var newAlbum Album
+
     id := ctx.Param("id")
+	db, err := sql.Open("mysql", dbuser+":"+dbpass+"@tcp(127.0.0.1:3306)/"+dbname)
 
-	// albums slice to seed record album data.
- 	albums := []Album{}
+    var album Album
 
-    // Call BindJSON to bind the received JSON to
-    // newAlbum.
-    if error := ctx.BindJSON(&newAlbum); error != nil {
-        return
-    }
+	// if there is an error opening the connection, handle it
+	if err != nil {
+		// simply print the error to the console
+		fmt.Println("DB Connection error", err.Error())
+		return
+	}
 
-	// Loop over the list of albums, looking for
-    // an album whose ID value matches the parameter.
-    for i, album := range albums {
-        if album.ID == id {
-			albums[i] = newAlbum // update the album by id
-            ctx.IndentedJSON(http.StatusOK, album)
-            return
-        }
-    }
-    ctx.IndentedJSON(http.StatusNotFound, gin.H{"message": "album could not be updated"})
+	defer db.Close()
+
+	update, err := db.Query(
+		"UPDATE albums SET title=?,artist=?,price=? WHERE albumId=?",
+		album.Title, album.Artist, album.Price, id)
+
+	// if there is an error inserting, handle it
+	if err != nil {
+		fmt.Println("An error occured while attempting to update album on db", err.Error())
+	}
+
+	defer update.Close()
+ 	ctx.JSON(http.StatusOK, gin.H{"data": update})
 }
 
 func main() {
