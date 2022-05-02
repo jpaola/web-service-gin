@@ -17,15 +17,12 @@ type Album struct {
     Price  float64 `json:"price"`
 }
 
-// Database credentials
-var dbuser = "nameOfUser"
-var dbpass = "somePasscode" 
-var dbname = "nameOfDB"
-
-
 // getAlbums responds with the list of all albums as JSON.
 func GetAlbums(ctx *gin.Context) {
-	db, err := sql.Open("mysql", dbuser+":"+dbpass+"@tcp(127.0.0.1:3306)/"+dbname)
+	// albums slice to seed record album data.
+	albums := []Album{}
+
+	db, err := sql.Open("mysql", "<user>:<password>@/<databasename>")
 
 	// if there is an error opening the connection, handle it
 	if err != nil {
@@ -43,9 +40,6 @@ func GetAlbums(ctx *gin.Context) {
 		fmt.Println("Query Error", err.Error())
 		return
 	}
-	
-	// albums slice to seed record album data.
- 	albums := []Album{}
 
 	for results.Next() {
 		var a Album
@@ -64,9 +58,9 @@ func GetAlbums(ctx *gin.Context) {
 
 // addAlbum adds an album from JSON received in the request body.
 func AddAlbum(ctx *gin.Context) {
-	db, err := sql.Open("mysql", dbuser+":"+dbpass+"@tcp(127.0.0.1:3306)/"+dbname)
+	var newAlbum Album
 
-    var newAlbum Album
+	db, err := sql.Open("mysql", "<user>:<password>@/<databasename>")
 
 	if err := ctx.ShouldBindJSON(&newAlbum); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -92,19 +86,18 @@ func AddAlbum(ctx *gin.Context) {
 	}
 
 	defer insert.Close()
-
  	ctx.JSON(http.StatusOK, gin.H{"data": insert})
 }
 
 // getAlbumByID locates the album whose ID value matches the id
 // parameter sent by the client, then returns that album as a response.
 func GetAlbumByID(ctx *gin.Context) {
-	db, err := sql.Open("mysql", dbuser+":"+dbpass+"@tcp(127.0.0.1:3306)/"+dbname)
-
 	id := ctx.Param("id")
-
+	
 	// album to seed record album data.
- 	album := &Album{}
+	album := &Album{}
+	
+	db, err := sql.Open("mysql", "<user>:<password>@/<databasename>")
 
 	// if there is an error opening the connection, handle it
 	if err != nil {
@@ -132,7 +125,6 @@ func GetAlbumByID(ctx *gin.Context) {
 		ctx.IndentedJSON(http.StatusNotFound, gin.H{"message": "album not found"})
 	}
 
-	fmt.Println(album)
 	ctx.IndentedJSON(http.StatusOK, album)
 }
 
@@ -141,31 +133,7 @@ func GetAlbumByID(ctx *gin.Context) {
 func RemoveAlbumByID(ctx *gin.Context) {
     id := ctx.Param("id")
 
-	// albums slice to seed record album data.
- 	albums := []Album{}
-
-	// Loop over the list of albums, looking for
-    // an album whose ID value matches the parameter.
-    for i, album := range albums {
-        if album.ID == id {
-			copy(albums[i:], albums[i+1:]) // Shift a[i+1:] left one index.
-			// albums[len(albums)-1] = {""}     // Erase last element (write zero value).
-			albums = albums[:len(albums)-1]     // Truncate slice.
-            ctx.IndentedJSON(http.StatusOK, album)
-            return
-        }
-    }
-    ctx.IndentedJSON(http.StatusNotFound, gin.H{"message": "album could not be deleted"})
-}
-
-// updateAlbumByID locates the album whose ID value matches the id
-// parameter sent by the client, then removes that album as a response.
-func UpdateAlbumByID(ctx *gin.Context) {
-
-    id := ctx.Param("id")
-	db, err := sql.Open("mysql", dbuser+":"+dbpass+"@tcp(127.0.0.1:3306)/"+dbname)
-
-    var album Album
+	db, err := sql.Open("mysql", "<user>:<password>@/<databasename>")
 
 	// if there is an error opening the connection, handle it
 	if err != nil {
@@ -176,9 +144,41 @@ func UpdateAlbumByID(ctx *gin.Context) {
 
 	defer db.Close()
 
-	update, err := db.Query(
-		"UPDATE albums SET title=?,artist=?,price=? WHERE albumId=?",
-		album.Title, album.Artist, album.Price, id)
+	delete, err := db.Query(
+		"DELETE FROM albums WHERE albumId=?", id)
+
+	// if there is an error inserting, handle it
+	if err != nil {
+		fmt.Println("An error occured while attempting to delete album from db", err.Error())
+	}
+
+	defer delete.Close()
+ 	ctx.JSON(http.StatusOK, gin.H{"data": delete})
+}
+
+// updateAlbumByID locates the album whose ID value matches the id
+// parameter sent by the client, then removes that album as a response.
+func UpdateAlbumByID(ctx *gin.Context) {
+	id := ctx.Param("id") 
+	var album Album
+	
+	db, err := sql.Open("mysql", "<user>:<password>@/<databasename>")
+	
+	if err := ctx.ShouldBindJSON(&album); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// if there is an error opening the connection, handle it
+	if err != nil {
+		// simply print the error to the console
+		fmt.Println("DB Connection error", err.Error())
+		return
+	}
+	
+	defer db.Close()
+	
+	update, err := db.Query("UPDATE albums SET title=?,artist=?,price=? WHERE albumId=?",album.Title, album.Artist, album.Price, id)
 
 	// if there is an error inserting, handle it
 	if err != nil {
