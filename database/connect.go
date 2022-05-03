@@ -9,7 +9,7 @@ func DBConn() (db *sql.DB) {
 	dbDriver := "mysql"
 	dbUser := "root"
 	dbPass := "password"
-	hostname := "tcp(127.0.0.1:3306)/"
+	hostname := "tcp(127.0.0.1:3306)"
 	dbName := "database"
 	db, err := sql.Open(dbDriver, dbUser+":"+dbPass+"@"+hostname+"/"+dbName)
 	
