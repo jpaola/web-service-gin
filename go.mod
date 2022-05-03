@@ -1,4 +1,4 @@
-module records/web-service-gin
+module github.com/jpaola/web-service-gin
 
 go 1.14
 
