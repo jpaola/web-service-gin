@@ -36,3 +36,5 @@ Insert into albums (albumID, title, artist, price) VALUES (2, 'Jeru', 'Gerry Mul
 Insert into albums (albumID, title, artist, price) VALUES (3, 'Sarah Vaughan and Clifford Brown', 'Sarah Vaughan', 33.99);
 ```
 The table should have albumID, title, artist, and price where albumId is considered the primary key.
+
+You may also create a `recordsDB.sql` file containing these queries.
